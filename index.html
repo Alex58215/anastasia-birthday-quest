@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#171229" />
+  <title>Anastasia's Birthday Quest</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div id="app">
+    <header class="topbar">
+      <div class="brand"><span class="brand-star">✦</span> ANASTASIA'S <span class="brand-accent">BIRTHDAY QUEST</span></div>
+      <div class="top-actions"><button id="soundBtn" class="icon-btn" aria-label="Toggle sound">♪ ON</button><button id="menuBtn" class="icon-btn">⚙ MENU</button></div>
+    </header>
+
+    <main class="game-shell">
+      <div class="game-frame">
+        <div id="scene" class="scene">
+          <canvas id="world" width="384" height="216" aria-label="First person walk through Moscow and Grenoble"></canvas>
+          <div class="scanlines"></div>
+          <div class="scene-vignette"></div>
+          <div id="guestSprite" class="guest-sprite" aria-hidden="true"><div class="sprite-name"></div><div class="sprite-head"><img id="spritePhoto" alt="" /></div><div class="sprite-body"><div class="sprite-arm left"></div><div class="sprite-arm right"></div></div></div>
+          <div class="hand hand-left"><div class="sleeve"></div><div class="fingers"></div><div class="wine-glass"><div class="wine"></div><div class="stem"></div><div class="base"></div></div></div>
+          <div class="hand hand-right"><div class="sleeve"></div><div class="fingers"></div><div class="bottle"><div class="neck"></div><div class="label">VIN</div></div></div>
+          <div id="sceneToast" class="scene-toast" aria-live="polite"></div>
+          <div id="interactionFx" class="interaction-fx" aria-hidden="true"></div>
+          <div id="levelBadge" class="level-badge" aria-label="Current level">LVL 01</div>
+          <div class="scene-corner tl"></div><div class="scene-corner tr"></div><div class="scene-corner bl"></div><div class="scene-corner br"></div>
+        </div>
+        <div class="hud">
+          <div class="hud-section"><span class="hud-label">LOCATION</span><strong id="locationLabel">PLACE GRE'NETTE</strong></div>
+          <div class="hud-section center"><span class="hud-label">QUEST PROGRESS</span><div class="progress-track"><div id="progressBar"></div></div><span id="progressLabel">0 / 0 FRIENDS</span></div>
+          <div class="hud-section right"><span id="statusLabel" class="hud-label">CHAPTER</span><strong id="wineLevel">MOSCOW</strong></div>
+        </div>
+      </div>
+      <div class="control-strip"><div class="control-hint"><kbd>W</kbd> / <kbd>↑</kbd> WALK <span class="sep">·</span> <kbd>A</kbd><kbd>D</kbd> LOOK AROUND <span class="sep">·</span> <kbd>ENTER</kbd> CHAT</div><button id="walkBtn" class="walk-btn">▲ HOLD TO WALK</button></div>
+    </main>
+
+    <div id="introOverlay" class="overlay intro-overlay">
+      <div class="memory-card pixel-panel"><div class="memory-photo"><img src="Photos/Anastasia.JPG" alt="Portrait of Anastasia" /><span class="memory-stamp">ANASTASIA</span></div><div class="memory-copy"><div class="eyebrow">✦ A BIRTHDAY ADVENTURE ✦</div><h1>ANASTASIA</h1><p>The glorious story of one girl.</p><button id="startBtn" class="primary-btn">▶ START THE GAME</button><div class="intro-small">HOLD W OR ↑ TO WALK · SOUND ON FOR THE STORY</div></div></div>
+    </div>
+
+    <div id="schoolOverlay" class="overlay story-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="schoolTitle"><div class="story-card pixel-panel"><div class="story-picture"><img src="Photos/university.JPG" alt="Anastasia with her mother at the end of school" /><span>SCHOOL DAYS · THE BEGINNING</span></div><div class="story-copy"><div class="eyebrow">✦ THE FIRST CHAPTER ✦</div><h2 id="schoolTitle">SCHOOL IS OVER!</h2><p>Anastasia has finished school. With her mother by her side, she looks ahead and wonders what she should do with her life. A new adventure is waiting just around the corner.</p><button id="schoolContinueBtn" class="primary-btn">▶ SEE WHAT COMES NEXT</button></div></div></div>
+
+    <div id="universityOverlay" class="overlay university-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="universityTitle"><div class="university-card pixel-panel"><div class="university-image"><img src="Photos/pleshka.jpg" alt="Plekhanov Russian University of Economics building in Moscow" /><span class="university-badge">MOSCOW · FLASHBACK</span></div><div class="university-choice"><div class="eyebrow">✦ A DOOR TO THE FUTURE ✦</div><h2 id="universityTitle">PLESHKA UNIVERSITY</h2><p>Anastasia stands before the university. What happens next?</p><div class="university-buttons"><button id="joinUniversityBtn" class="primary-btn">▶ JOIN UNIVERSITY</button><button id="skipUniversityBtn" class="secondary-btn">↷ SKIP IT</button></div></div></div></div>
+
+    <div id="schneiderOverlay" class="overlay university-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="schneiderTitle"><div class="university-card schneider-card pixel-panel"><div class="university-image"><img src="Photos/schneider_dvintsev.jpg" alt="Schneider Electric building on Dvintsev Street in Moscow" /><span class="university-badge">MOSCOW · NEXT OPPORTUNITY</span></div><div class="university-choice"><div class="eyebrow">✦ AN INTERNSHIP OPPORTUNITY ✦</div><h2 id="schneiderTitle">SCHNEIDER ELECTRIC</h2><p>Anastasia faces a new choice: become an intern or keep walking?</p><div class="university-buttons"><button id="joinSchneiderBtn" class="primary-btn">▶ BECOME AN INTERN</button><button id="skipSchneiderBtn" class="secondary-btn">↷ SKIP IT</button></div></div></div></div>
+
+    <div id="levelOverlay" class="overlay level-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="levelTitle"><div class="level-card pixel-panel"><div class="level-stars">✦ ✦ ✦</div><div class="eyebrow">ANASTASIA'S STORY CONTINUES</div><h2 id="levelTitle">ANASTASIA<br><span>LEVELS UP!</span></h2><div class="level-number" id="levelNumber">ANASTASIA · LEVEL 02</div><p id="levelMessage">A new opportunity is waiting in Moscow.</p><button id="levelContinueBtn" class="primary-btn">▶ CONTINUE</button></div></div>
+
+    <div id="flightOverlay" class="overlay flight-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="flightTitle"><div class="flight-card pixel-panel"><div class="eyebrow">✦ A NEW HOME · 2020 ✦</div><h2 id="flightTitle">MOSCOW <span>✈</span> GRENOBLE</h2><div class="flight-sky" aria-hidden="true"><div class="flight-cloud cloud-one">☁</div><div class="flight-cloud cloud-two">☁</div><div class="flight-cloud cloud-three">☁</div><div class="flight-route"></div><div class="flight-plane">✈</div><div class="flight-city city-moscow">MOSCOW</div><div class="flight-city city-grenoble">GRENOBLE</div></div><p id="flightMessage">In 2020, Anastasia and Aleksey move from Moscow to Grenoble. Their next adventure is about to begin!</p><button id="flightContinueBtn" class="primary-btn">▶ LAND IN GRENOBLE</button></div></div>
+
+    <div id="montageOverlay" class="overlay montage-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="montageTitle"><div id="montageStage" class="montage-stage pixel-panel mode-party"><div class="montage-top"><span id="montageChapter">MOSCOW · UNIVERSITY YEARS</span><span id="montageCounter">01 / 06</span></div><div class="montage-decor" aria-hidden="true"><span class="decor-a">♫</span><span class="decor-b">✦</span><span class="decor-c">★</span></div><div class="montage-center"><div class="montage-portrait"><img src="Photos/IMG_4416.jpeg" alt="Anastasia" /></div><div id="montageProp" class="montage-prop">♫</div></div><div class="montage-bottom"><h2 id="montageTitle">PARTY!</h2><p id="montageMessage">The music starts and Anastasia owns the dance floor.</p></div></div></div>
+
+    <div id="storyOverlay" class="overlay story-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="storyTitle"><div class="story-card pixel-panel"><div class="story-picture"><img id="storyPhoto" alt="" /><span id="storyStamp">MOSCOW · A NEW CHAPTER</span></div><div class="story-copy"><div class="eyebrow" id="storyEyebrow">✦ A FATEFUL MEETING ✦</div><h2 id="storyTitle">THE PRINCE APPEARS</h2><p id="storyText"></p><button id="storyContinueBtn" class="primary-btn">▶ CONTINUE</button></div></div></div>
+
+    <div id="movieOverlay" class="overlay movie-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="movieTitle"><div class="movie-card pixel-panel"><div class="movie-head"><span id="movieChapter">★ THE MOSCOW MOVIE ★</span><span id="movieByline">STARRING ANASTASIA</span></div><h2 id="movieTitle">ANASTASIA BECOMES A MOVIE STAR!</h2><div class="movie-screen"><video id="storyVideo" preload="metadata" playsinline controls poster="Photos/prince_2.JPG"><source id="storyVideoSource" src="Photos/video_story.m4v" type="video/mp4" /><track kind="subtitles" src="Photos/video_story.en.vtt" srclang="en" label="English" />Your browser cannot play this video.</video><div id="movieSubtitles" class="movie-subtitles" aria-live="off"></div></div><p id="movieHelp">Press play to watch her star moment.</p><div class="movie-actions"><button id="moviePlayBtn" class="primary-btn">▶ PLAY THE MOVIE</button><button id="movieCCBtn" class="secondary-btn" aria-pressed="true">CC ON</button><button id="movieSkipBtn" class="secondary-btn">↷ CONTINUE STORY</button></div></div></div>
+
+    <div id="encounterOverlay" class="overlay encounter-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="encounterName"><div class="encounter-card pixel-panel"><div class="encounter-top"><span id="encounterTag" class="eyebrow">YOU MET SOMEONE!</span><span id="encounterCount" class="count-pill">01 / 01</span></div><div class="encounter-main"><div class="encounter-photo"><img id="encounterPhoto" alt="" /></div><div class="encounter-copy"><h2 id="encounterName">Mystery guest</h2><div id="encounterRole" class="role">FRIEND</div><p id="encounterPrompt">What will Anastasia do?</p><div id="actionGrid" class="action-grid"></div></div></div><div id="reaction" class="reaction hidden"></div></div></div>
+
+    <div id="actionScene" class="overlay action-scene-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="actionSceneTitle">
+      <div id="actionStage" class="action-stage pixel-panel">
+        <div class="stage-neon" id="stageNeon">✦ GRENOBLE ✦</div>
+        <div class="stage-lights" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+        <div class="stage-effects" id="stageEffects" aria-hidden="true"></div>
+        <div class="stage-actors">
+          <div class="stage-actor ana"><div class="actor-prop"></div><div class="actor-head"><img src="Photos/IMG_4416.jpeg" alt="Anastasia" /></div><div class="actor-body"><span class="actor-arm left"></span><span class="actor-arm right"></span></div><div class="actor-name">ANASTASIA</div></div>
+          <div class="stage-actor guest"><div class="actor-prop"></div><div class="actor-head"><img id="stageGuestPhoto" alt="" /></div><div class="actor-body"><span class="actor-arm left"></span><span class="actor-arm right"></span></div><div class="actor-name" id="stageGuestName">FRIEND</div></div>
+        </div>
+        <div class="stage-shots hidden" id="stageShots"><span>TEQUILA SHOTS</span><strong id="shotCount">0 / 6</strong><div class="shot-icons" id="shotIcons">▢ ▢ ▢ ▢ ▢ ▢</div></div>
+        <div class="stage-caption"><h2 id="actionSceneTitle">BIRTHDAY MOMENT!</h2><p id="actionSceneMessage"></p></div>
+      </div>
+    </div>
+
+    <div id="endingOverlay" class="overlay ending-overlay hidden" role="dialog" aria-modal="true"><div class="ending-card pixel-panel"><div class="confetti" aria-hidden="true">✦ ♥ ✦ ♥ ✦</div><div class="ending-photos"><img src="Photos/IMG_4416.jpeg" alt="Anastasia"/><span>♥</span><img src="Photos/IMG_6081.jpeg" alt="Aleksey"/></div><div class="eyebrow">THE QUEST IS COMPLETE</div><h1>HAPPY END</h1><p>Happy birthday, Anastasia! Here's to every friend, every laugh, every dance, and all the adventures still to come. ♥</p><button id="playAgainBtn" class="primary-btn">↻ PLAY AGAIN</button><button id="openMenuEnding" class="text-btn">EDIT THE GUEST LIST</button></div></div>
+
+    <div id="menuOverlay" class="overlay menu-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="menuTitle"><div class="menu-card pixel-panel"><div class="menu-head"><div><div class="eyebrow">GAME SETUP</div><h2 id="menuTitle">THE GUEST LIST</h2></div><button id="closeMenuBtn" class="close-btn" aria-label="Close menu">✕</button></div><div class="menu-body"><div class="menu-intro">Choose who Anastasia meets and in which order. Names, photos and actions are yours to edit. Changes save in this browser.</div><div id="guestList" class="guest-list"></div><div class="add-row"><button id="addGuestBtn" class="secondary-btn">＋ ADD A PERSON OR PET</button><button id="exportBtn" class="secondary-btn">↓ EXPORT LIST</button><label class="secondary-btn import-btn">↑ IMPORT LIST<input id="importInput" type="file" accept="application/json" hidden /></label></div><div class="fixed-finale"><span>▣</span><div><strong>CHAPTER ONE: MOSCOW UNIVERSITY</strong><small>Joining plays three party and study cycles.</small></div></div><div class="fixed-finale"><span>◆</span><div><strong>CHAPTER TWO: SCHNEIDER ELECTRIC</strong><small>The internship choice follows another Moscow walk. Joining plays work and party cycles, then the prince, movie, and marriage story.</small></div></div><div class="fixed-finale"><span>★</span><div><strong>GRENOBLE: TOLIKI & FRIDAY NIGHT</strong><small>Meet new friends, then watch Anastasia’s next film.</small></div></div><div class="fixed-finale"><span>🐾</span><div><strong>GRENOBLE: KAIKO</strong><small>Meet puppy Kaiko, watch his video, and see him all grown up.</small></div></div><div class="fixed-finale"><span>♫</span><div><strong>AFTER GUEST 5: BARRIO LATINO</strong><small>Dance with Puta Madre and take six tequila shots.</small></div></div><div class="fixed-finale"><span>♛</span><div><strong>FINAL ENCOUNTER: PRINCE ALEKSEY</strong><small>Always last, with one special interaction.</small></div></div></div><div class="menu-foot"><button id="resetBtn" class="text-btn">RESET DEFAULT LIST</button><button id="saveMenuBtn" class="primary-btn">SAVE & RETURN</button></div></div></div>
+  </div>
+  <script src="game.js"></script>
+</body>
+</html>

@@ -1,0 +1,8 @@
+.DS_Store
+node_modules/
+*.log
+
+# Keep the original camera files locally. The smaller .m4v copies are used by the game.
+Photos/video1.MOV
+Photos/Friday Night.mov
+Photos/kaiko_video.MOV
