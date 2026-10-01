@@ -43,9 +43,32 @@ const actionInfo = {
  scissors:['✌️','Scissors','Both laugh and flash scissors with their fingers!'],
  pet:['🐾','Pet','Good dog! Best birthday encounter.'],
  treat:['🦴','Give a treat','Tail wagging intensifies!'],
- boop:['👆','Boop the nose','Boop! Instant happiness.']
+ boop:['👆','Boop the nose','Boop! Instant happiness.'],
+ caesar:['👑','Caesar','Rafa is crowned Caesar of Grenoble with a napkin. Veni, vidi, vino!'],
+ threewine:['🍷','Three bottles of wine','Bottle one: strategy. Bottle two: karaoke. Bottle three: nobody remembers the agenda.'],
+ workevent:['🎪','Plan a legendary work event','They book a venue, add a dance floor, and create the work event people still talk about years later.'],
+ ontime:['⏰','Remind him to be on time','Anastasia sets Nico seven alarms. He arrives at 9:01 and calls it early.'],
+ venice:['🛶','Go to Venice','The gondolier waits for Nico, naturally. Anastasia has already seen half of Venice.'],
+ sevenwine:['🧀','Seven bottles of wine, good cheese, and headache in the morning','Seven bottles, one heroic cheese board, and a morning that requires sunglasses indoors.'],
+ responsibilities:['📋','Say yes to more responsibilities','Ganzu offers one task. Anastasia says yes. Suddenly she is running the whole show while his shisha bubbles approvingly.'],
+ snowboard:['🏂','Snowboard','Kelly points downhill. Anastasia shouts “I meant the easy slope!” and still lands like a champion.'],
+ bardance:['💃','Dance on the bar','Kelly and Anastasia turn the bar into a stage. Even the bartender gives them a standing ovation.'],
+ gossip:['🤫','Gossip','One whispered story becomes a six-season series before dessert arrives.']
 };
-const defaults = photos.map((p,i) => ({id:'guest-'+i,name:p[1]==='pet'?'The Birthday Pup':`Mystery Guest ${String(i+1).padStart(2,'0')}`,role:p[2],kind:p[1],photo:PHOTO+p[0],enabled:true,actions:p[1]==='pet'?['pet','treat','boop','selfie']:p[1]==='woman'?['hug','dance','toast','scissors','selfie','sing']:['hug','dance','toast','highfive','joke','punch'],custom:''}));
+const starterGuests = photos.map((p,i) => ({id:'guest-'+i,name:p[1]==='pet'?'The Birthday Pup':`Mystery Guest ${String(i+1).padStart(2,'0')}`,role:p[2],kind:p[1],photo:PHOTO+p[0],enabled:true,actions:p[1]==='pet'?['pet','treat','boop','selfie']:p[1]==='woman'?['hug','dance','toast','scissors','selfie','sing']:['hug','dance','toast','highfive','joke','punch'],custom:''}));
+const featuredActions={Rafa:['caesar','threewine','workevent'],Nico:['punch','ontime','venice'],Nick:['sevenwine'],Ganzu:['responsibilities'],Kelly:['snowboard','bardance','gossip']};
+const featuredSeed=[
+  {id:'guest-19',name:'Rafa',kind:'woman',photo:PHOTO+'b1599d11-6783-41d0-83a6-b703fbbef33a.jpg'},
+  {id:'guest-1',name:'Nico',kind:'man',photo:PHOTO+'040ad64f-e1bd-41e6-9463-6cd9bfae8193.jpg'},
+  {id:'guest-21',name:'Nick',kind:'man',photo:PHOTO+'c0d752e1-4117-435a-a875-8e2c36eb0dce.jpg'},
+  {id:'guest-20',name:'Ganzu',kind:'man',photo:PHOTO+'bd5cb0e6-293d-4504-8135-f5ccc0add804.jpg'},
+  {id:'kelly',name:'Kelly',kind:'woman',photo:PHOTO+'kelly.jpeg'}
+];
+const otherSeeds=[
+  {id:'guest-8',name:'Vino aka Putta Madre',photo:PHOTO+'4f0b3899-187c-4f9c-9417-6d2b60db60c6.jpg'},
+  {id:'guest-11',name:'Mystery Guest 12',photo:PHOTO+'76C1DC33-07DC-4F1A-8342-A208CBA3C54F.jpg'}
+];
+const defaults=[...featuredSeed.map(s=>({role:'Friend',enabled:true,custom:'',...s,actions:featuredActions[s.name]})),...otherSeeds.map(s=>({role:'Friend',kind:'man',enabled:true,actions:['hug','dance','toast','highfive','joke','punch'],custom:'',...s}))];
 const university = {id:'university',name:'Pleshka University',role:'Moscow · a choice ahead',kind:'place',photo:PHOTO+'pleshka.jpg',actions:['join','skip']};
 const schneider = {id:'schneider',name:'Schneider Electric',role:'Moscow · an internship opportunity',kind:'place',photo:PHOTO+'schneider_dvintsev.jpg',actions:['join','skip']};
 const toliki = {id:'toliki',name:'Toliki',role:'Grenoble · new friends',kind:'group',photo:PHOTO+'toliki.jpg'};
@@ -66,11 +89,17 @@ const movieCaptionCues=[
 const ctx=el.canvas.getContext('2d'); ctx.imageSmoothingEnabled=false;
 const universityImage=new Image();universityImage.src=PHOTO+'pleshka.jpg';
 const schneiderImage=new Image();schneiderImage.src=PHOTO+'schneider_dvintsev.jpg';
-let roster=loadRoster(), route=[], progress=0, encounterIndex=0, playing=false, inEncounter=false, ended=false, menuOpen=false, walking=false, corridorWalk=false, corridorTarget='prince', look=0, soundOn=true, movieCaptionsOn=true, videoContinue=null, videoSceneId=0, lastTime=0, stepAccum=0, toastTimer, drunk=false, sequenceToken=0, level=1, levelContinue=null, storyContinue=null, marriedInMoscow=false;
+let roster=loadRoster(), route=[], progress=0, encounterIndex=0, playing=false, inEncounter=false, ended=false, menuOpen=false, walking=false, corridorWalk=false, corridorTarget='prince', look=0, soundOn=true, movieCaptionsOn=true, videoContinue=null, videoSceneId=0, lastTime=0, stepAccum=0, toastTimer, drunk=false, sequenceToken=0, level=1, levelContinue=null, storyContinue=null, storyCardId=0, marriedInMoscow=false;
 let audioCtx;
-function loadRoster(){try{const saved=JSON.parse(localStorage.getItem('anastasiaQuestRoster'));if(Array.isArray(saved)) return saved.map(sanitizeGuest).filter(g=>g&&!g.photo.endsWith('b74f4e09-a2a6-4487-9aad-9d2b959e98f3.jpg'))}catch(e){}return structuredClone(defaults)}
+function loadRoster(){try{const saved=JSON.parse(localStorage.getItem('anastasiaQuestRoster'));if(Array.isArray(saved)){
+  const guests=saved.map(sanitizeGuest).filter(g=>g&&!g.photo.endsWith('b74f4e09-a2a6-4487-9aad-9d2b959e98f3.jpg'));
+  if(localStorage.getItem('anastasiaQuestRosterVersion')==='3')return guests;
+  const ordered=featuredSeed.map(seed=>{const found=guests.find(g=>g.id===seed.id||g.name.toLowerCase()===seed.name.toLowerCase());return {...(found||{role:'Friend',enabled:true}),...seed,photo:seed.photo||found?.photo||'',actions:[...featuredActions[seed.name]],custom:''}});
+  const rest=guests.filter(g=>!ordered.some(f=>f.id===g.id||f.name.toLowerCase()===g.name.toLowerCase()));
+  const migrated=[...ordered,...rest];localStorage.setItem('anastasiaQuestRoster',JSON.stringify(migrated));localStorage.setItem('anastasiaQuestRosterVersion','3');return migrated;
+}}catch(e){}return structuredClone(defaults)}
 function sanitizeGuest(g){if(!g||typeof g!=='object')return null;return {id:String(g.id||crypto.randomUUID()),name:String(g.name||'Mystery Guest').slice(0,80),role:String(g.role||'Friend').slice(0,80),kind:['woman','man','pet','group'].includes(g.kind)?g.kind:'group',photo:typeof g.photo==='string'?g.photo:'',enabled:g.enabled!==false,actions:Array.isArray(g.actions)?g.actions.filter(a=>actionInfo[a]):['hug','dance','toast'],custom:String(g.custom||'').slice(0,80)}}
-function saveRoster(){try{localStorage.setItem('anastasiaQuestRoster',JSON.stringify(roster))}catch(e){alert('This browser could not save all photos. Try a smaller image or export your list.')}}
+function saveRoster(){try{localStorage.setItem('anastasiaQuestRoster',JSON.stringify(roster));localStorage.setItem('anastasiaQuestRosterVersion','3')}catch(e){alert('This browser could not save all photos. Try a smaller image or export your list.')}}
 function makeRoute(){route=[university,schneider,toliki,kaiko,...roster.filter(g=>g.enabled).map(g=>({...g}))];route.splice(Math.min(9,route.length),0,barrio);route.push(finale);progress=0;encounterIndex=0;ended=false;inEncounter=false;updateHUD();updateSprite()}
 function locationAt(i){return corridorWalk?'SCHNEIDER · CORRIDORS':route[i]?.id==='university'?'MOSCOW · PLESHKA':route[i]?.id==='schneider'?'MOSCOW · DVINTSEV':route[i]?.id==='barrio'?'BARRIO LATINO':route[i]?.id==='toliki'?'GRENOBLE · NEW FRIENDS':route[i]?.id==='kaiko'?'GRENOBLE · KAIKO':locations[Math.floor(Math.max(0,i-2)/2)%locations.length]}
 function updateHUD(){const friends=Math.max(0,route.length-3),met=Math.min(Math.max(0,encounterIndex-2),friends),inMoscow=corridorWalk||['university','schneider'].includes(route[encounterIndex]?.id);el.location.textContent=locationAt(encounterIndex);el.progress.style.width=`${friends?met/friends*100:100}%`;el.progressLabel.textContent=`${met} / ${friends} FRIENDS`;$('#statusLabel').textContent=inMoscow?'CHAPTER':'WINE LEVEL';$('#wineLevel').textContent=inMoscow?'MOSCOW':drunk?'TEQUILA x6 ★':'♥ ♥ ♥';el.levelBadge.textContent=`ANASTASIA · LVL ${String(level).padStart(2,'0')}`;el.levelBadge.setAttribute('aria-label',`Anastasia's current level: ${level}`);el.scene.classList.toggle('tipsy',drunk);el.scene.classList.toggle('moscow',inMoscow)}
@@ -84,7 +113,10 @@ function playActionMusic(action){
     sing:[392,440,523,587,659,587,523,784],serenade:[330,392,494,587,659,587,494,784],toast:[523,784,1047,784,1175,1047],
     scissors:[659,784,659,988,784,1175,988,1319],punch:[196,196,392,156,523],ignore:[440,392,349,330,294],
     pet:[523,587,659,784,659,587],treat:[523,659,784,988,784],boop:[784,1047,1319],
-    joke:[392,523,392,659,523,784],selfie:[784,988,1175,1568],confetti:[523,659,784,988,1175,1319],spin:[392,494,587,698,784,988],compliment:[523,659,784,1047],highfive:[392,784,1175]
+    joke:[392,523,392,659,523,784],selfie:[784,988,1175,1568],confetti:[523,659,784,988,1175,1319],spin:[392,494,587,698,784,988],compliment:[523,659,784,1047],highfive:[392,784,1175],
+    caesar:[392,523,659,784,1047,784],threewine:[523,659,784,659,523,784,988],workevent:[330,392,494,587,784,988,784,1047],
+    ontime:[784,392,784,392,988,523],venice:[349,440,523,659,587,523,440],sevenwine:[523,659,784,988,784,659,523],
+    responsibilities:[262,330,392,523,659,784],snowboard:[392,494,587,784,988,1175],bardance:[330,494,659,494,392,587,784,587],gossip:[523,587,659,587,784,659]
   };
   const notes=tunes[action]||[523,659,784,1047];
   const repetitions=action==='bar'?2:1,beat=action==='bar'?.21:.22;
@@ -112,7 +144,7 @@ function chooseUniversity(join){const token=++sequenceToken;el.university.classL
   ['study','ONE MORE STUDY SESSION!','And she still finds time to learn it all.','▣']
 ];playMontage(beats,'MOSCOW · UNIVERSITY YEARS',token,()=>showLevelUp(2,'University complete! Anastasia reaches Level 02. A new opportunity awaits.',token,finishUniversity))}
 function chooseSchneider(join){const token=++sequenceToken;el.schneider.classList.add('hidden');if(!join){showLevelUp(3,'The Moscow chapter ends. Grenoble is waiting!',token,t=>showFlight(t,false));return}beginCorridorWalk(token)}
-function showStoryCard({photo,alt,eyebrow,title,text:body,button,stamp},token,next){if(token!==sequenceToken)return;el.montage.classList.add('hidden');el.movie.classList.add('hidden');el.story.classList.toggle('story-text-only',!photo);if(photo){el.storyPhoto.src=PHOTO+photo;el.storyPhoto.alt=alt}else{el.storyPhoto.removeAttribute('src');el.storyPhoto.alt=''};$('#storyEyebrow').textContent=eyebrow;$('#storyTitle').textContent=title;$('#storyText').textContent=body;$('#storyStamp').textContent=stamp||'MOSCOW · A NEW CHAPTER';$('#storyContinueBtn').textContent=button;storyContinue=()=>{if(token!==sequenceToken)return;next(token)};el.story.classList.remove('hidden');melody([392,523,659,784])}
+function showStoryCard({photo,alt,eyebrow,title,text:body,button,stamp,autoAdvanceMs=0},token,next){if(token!==sequenceToken)return;el.montage.classList.add('hidden');el.movie.classList.add('hidden');el.story.classList.toggle('story-text-only',!photo);if(photo){el.storyPhoto.src=PHOTO+photo;el.storyPhoto.alt=alt}else{el.storyPhoto.removeAttribute('src');el.storyPhoto.alt=''};$('#storyEyebrow').textContent=eyebrow;$('#storyTitle').textContent=title;$('#storyText').textContent=body;$('#storyStamp').textContent=stamp||'MOSCOW · A NEW CHAPTER';$('#storyContinueBtn').textContent=button;$('#storyContinueBtn').classList.toggle('hidden',!!autoAdvanceMs);const cardId=++storyCardId;storyContinue=()=>{if(token!==sequenceToken||cardId!==storyCardId)return;storyContinue=null;next(token)};el.story.classList.remove('hidden');melody([392,523,659,784]);if(autoAdvanceMs)setTimeout(()=>{if(token===sequenceToken&&cardId===storyCardId&&!el.story.classList.contains('hidden'))storyContinue?.()},autoAdvanceMs)}
 function startPrinceStory(token){showStoryCard({photo:'prince_2.JPG',alt:'Aleksey, the prince Anastasia meets',eyebrow:'✦ A FATEFUL MEETING ✦',title:'A BEAUTIFUL PRINCE',text:'Walking through the Schneider Electric corridors after work, Anastasia meets a beautiful prince named Aleksey.',button:'▶ WHO IS THIS PRINCE?',stamp:'MOSCOW · THEY MEET'},token,showProducerStory)}
 function showProducerStory(token){showStoryCard({photo:'prince.jpg',alt:'Aleksey, the brilliant producer',eyebrow:'✦ THE PRINCE HAS A SECRET ✦',title:'A BRILLIANT PRODUCER',text:'Smart, handsome, and blessed with a perfect sense of humor, Aleksey had one more surprise: he was a brilliant producer. He introduced young Anastasia to the amazing world of Industrial Automation—where even robots were ready to follow her lead.',button:'▶ START THE MACHINES!',stamp:'ALEKSEY · THE PRODUCER'},token,showAutomationShow)}
 function showAutomationShow(token){el.story.classList.add('hidden');playMontage([
@@ -120,13 +152,13 @@ function showAutomationShow(token){el.story.classList.add('hidden');playMontage(
   ['machine','ROBOT DANCE!','Conveyors roll. Robot arms wave. The machines may have better rhythm than the interns.','⚙'],
   ['party','STAR POWER!','Anastasia takes the controls. Suddenly the factory floor is a movie set—and she is the star.','★']
 ],'ALEKSEY PRESENTS · INDUSTRIAL AUTOMATION',token,t=>{if(t!==sequenceToken)return;el.montage.classList.add('hidden');showMovieStory(t)})}
-function showOlgaStory(token){showStoryCard({photo:'olga.JPG',alt:'Olga outside Schneider Electric with a very green visitor',eyebrow:'✦ A NEW FRIEND IN THE CORRIDOR ✦',title:'MEET OLGA!',text:'Back in the Schneider corridors, Anastasia meets Olga. She is ready for anything—even a surprise visit from Shrek. Together they discover the unofficial office rhythm: party, work, repeat!',button:'▶ LET THE GOOD TIMES ROLL',stamp:'MOSCOW · OLGA'},token,t=>showSchneiderParty(t,1))}
-function showSchneiderParty(token,round){showVideoScene({chapter:'★ SCHNEIDER DAYS · MOSCOW ★',byline:`PARTY ${round} / 3`,title:['','THE FIRST PARTY!','PARTY MODE: ON!','ONE MORE PARTY!'][round],source:`party${round}.mp4`,poster:'olga.JPG',playLabel:'▶ REPLAY THE PARTY',withCaptions:false,advanceOnEnd:false,continueLabel:'▶ BACK TO WORK'},token,t=>showSchneiderWork(t,round))}
+function showOlgaStory(token){showStoryCard({photo:'olga.JPG',alt:'Olga outside Schneider Electric with a very green visitor',eyebrow:'✦ AN OFFER IN THE CORRIDOR ✦',title:'MEET OLGA!',text:'Olga has an idea for Anastasia: “Would you like to join the Home Distribution Channel team and lead e-commerce?” Anastasia says yes. A new team, a new challenge—and the unofficial office rhythm is about to begin: party, work, repeat!',button:'♥ ACCEPT OLGA’S OFFER',stamp:'MOSCOW · SCHNEIDER ELECTRIC'},token,t=>showSchneiderParty(t,1))}
+function showSchneiderParty(token,round){showVideoScene({chapter:'★ SCHNEIDER DAYS · MOSCOW ★',byline:`PARTY ${round} / 3`,title:['','THE FIRST PARTY!','PARTY MODE: ON!','ONE MORE PARTY!'][round],source:`party${round}.mp4`,poster:'olga.JPG',playLabel:'▶ PLAY THE PARTY',withCaptions:false,advanceOnEnd:true,continueLabel:'▶ SKIP TO WORK'},token,t=>showSchneiderWork(t,round))}
 function showSchneiderWork(token,round){const scenes=[null,
   {title:'WORK MODE: ON!',text:'After the first party, Anastasia and Olga are back with the team. There is always time for one more idea—and one more photo.',button:'▶ PARTY AGAIN!'},
   {title:'TEAMWORK LEVEL UP!',text:'The team grows, the smiles get bigger, and the workdays turn into stories they will remember.',button:'▶ KEEP THE PARTY GOING'},
   {title:'ONE MORE WORKDAY!',text:'Three parties and three workdays later, Anastasia has found more than an internship: she has found her people.',button:'♥ WHAT HAPPENS NEXT?'}
-];const scene=scenes[round];showStoryCard({photo:`work${round}.jpeg`,alt:`Anastasia with friends and colleagues, work day ${round}`,eyebrow:`✦ SCHNEIDER · WORK ${round} / 3 ✦`,title:scene.title,text:scene.text,button:scene.button,stamp:`MOSCOW · WORK ${round} / 3`},token,round<3?t=>showSchneiderParty(t,round+1):showLoveStory)}
+];const scene=scenes[round];showStoryCard({photo:`work${round}.jpeg`,alt:`Anastasia with friends and colleagues, work day ${round}`,eyebrow:`✦ SCHNEIDER · WORK ${round} / 3 ✦`,title:scene.title,text:scene.text,button:scene.button,stamp:`MOSCOW · WORK ${round} / 3`,autoAdvanceMs:4500},token,round<3?t=>showSchneiderParty(t,round+1):showLoveStory)}
 function showLoveStory(token){showStoryCard({eyebrow:'✦ A LOVE STORY BEGINS ✦',title:'ANASTASIA & ALEKSEY',text:'Somewhere between work, laughter, and making a movie together, Anastasia and Aleksey fall in love. Their story grows into a life together—and in 2020, Moscow has a special surprise waiting for them.',button:'♥ WHAT HAPPENS NEXT?',stamp:'MOSCOW · 2020'},token,showMarriageStory)}
 function showMarriageStory(token){showStoryCard({photo:'marriage.jpg',alt:'Anastasia and Aleksey together with their marriage certificate',eyebrow:'✦ MOSCOW · 2020 ✦',title:'JUST MARRIED!',text:'Anastasia and Aleksey celebrate their wedding in Moscow. A new adventure begins together.',button:'▶ GO TO THE NEXT CHAPTER',stamp:'MOSCOW · JUST MARRIED'},token,finishMarriageStory)}
 function advanceGrenobleEncounter(token){if(token!==sequenceToken)return;el.story.classList.add('hidden');el.movie.classList.add('hidden');inEncounter=false;encounterIndex++;progress=encounterIndex*100-10;updateHUD();showToast('KEEP EXPLORING GRENOBLE',2400);melody([392,494,587,784])}
@@ -153,19 +185,22 @@ function showActionScene(action,g,message){
     sing:['🎤','🎤','♪ ♫ ♪'],serenade:['🎤','♥','♪ ♥ ♪'],toast:['🥂','🥂','✦ CLINK! ✦'],highfive:['✋','✋','✦ POW! ✦'],
     joke:['😂','😂','HA HA HA!'],selfie:['📸','✌️','✦ FLASH! ✦'],confetti:['🎉','🎉','✦ ✦ ✦ ✦'],spin:['🌀','🌀','✦ ✦ ✦'],
     compliment:['✨','♥','YOU LOOK AMAZING!'],punch:['🥊','😵','✦ BONK! ✦'],ignore:['😎','?!','...'],scissors:['✌️','✌️','✌️ ✌️'],
-    pet:['✋','🐾','♥ ♥ ♥'],treat:['🦴','🐾','YUM!'],boop:['👆','🐾','BOOP!'],custom:['✨','✨','✦ ✦ ✦']
+    pet:['✋','🐾','♥ ♥ ♥'],treat:['🦴','🐾','YUM!'],boop:['👆','🐾','BOOP!'],custom:['✨','✨','✦ ✦ ✦'],
+    caesar:['👑','🏛️','VENI VIDI VINO!'],threewine:['🍷','🍷','🍷 🍷 🍷'],workevent:['🎪','📋','BEST. EVENT. EVER!'],
+    ontime:['⏰','🏃','9:01!'],venice:['🛶','🇮🇹','CIAO, VENEZIA!'],sevenwine:['🧀','🍷','🍷 🧀 🍷'],
+    responsibilities:['📋','💨','YES, BOSS!'],snowboard:['🏂','🏂','❄ ❄ ❄'],bardance:['💃','🪩','♪ ♫ ♪'],gossip:['🤫','👂','SHHH...']
   }[action]||['✨','✨','✦ ✦ ✦'];
   el.actionStage.className=`action-stage pixel-panel mode-${action}${g.kind==='pet'?' pet-stage':''}`;
-  el.stageGuestPhoto.src=g.photo||'';el.stageGuestPhoto.alt=g.name;el.stageGuestName.textContent=g.name.toUpperCase();
+  el.stageGuestPhoto.src=action==='snowboard'?PHOTO+'kelly-snowboard.JPG':g.photo||'';el.stageGuestPhoto.alt=action==='snowboard'?'Kelly on the snowboard':g.name;el.stageGuestName.textContent=g.name.toUpperCase();
   el.actionStage.querySelector('.stage-actor.ana .actor-prop').textContent=visual[0];
   el.actionStage.querySelector('.stage-actor.guest .actor-prop').textContent=visual[1];
   el.stageEffects.textContent=visual[2];$('#actionSceneTitle').textContent=action==='bar'?'BARRIO LATINO!':action==='promise'?'THE PRINCE & THE BIRTHDAY GIRL':(actionInfo[action]?.[1]||'BIRTHDAY MOMENT').toUpperCase()+'!';
-  $('#actionSceneMessage').textContent=message;$('#stageNeon').textContent=action==='bar'?'★ BARRIO LATINO ★':'✦ GRENOBLE ✦';
+  $('#actionSceneMessage').textContent=message;$('#stageNeon').textContent=action==='bar'?'★ BARRIO LATINO ★':action==='snowboard'?'★ THE SNOWY ALPS ★':action==='venice'?'★ VENICE ★':'✦ GRENOBLE ✦';
   el.stageShots.classList.toggle('hidden',action!=='bar');$('#shotCount').textContent='0 / 6';$('#shotIcons').textContent='▢ ▢ ▢ ▢ ▢ ▢';
   el.encounter.classList.add('hidden');el.actionScene.classList.remove('hidden');
 }
 function finishAction(action,token){if(token!==sequenceToken)return;el.actionScene.classList.add('hidden');inEncounter=false;if(action==='promise'){endGame();return}encounterIndex++;progress=encounterIndex*100-10;updateHUD();showToast(drunk&&action==='bar'?'SO MANY TEQUILA SHOTS...':`ONWARD TO ${locationAt(encounterIndex)}!`,2000)}
-function doAction(action){const g=route[encounterIndex];if(!g)return;[...el.actionGrid.children].forEach(b=>b.disabled=true);let message=actionInfo[action]?.[2]||`${g.name} and Anastasia have a great time!`;if(action==='custom')message=`${g.name} and Anastasia: ${g.custom}!`;if(action==='promise')message=marriedInMoscow?'Aleksey smiles. Anastasia kisses her husband and prince. ♥':'Aleksey smiles. Anastasia kisses her prince. ♥';if(action==='bar')message='Puta Madre and Anastasia dance under the neon lights!';const token=++sequenceToken;showActionScene(action,g,message);playActionMusic(action);if(action==='bar'){
+function doAction(action){const g=route[encounterIndex];if(!g)return;[...el.actionGrid.children].forEach(b=>b.disabled=true);let message=actionInfo[action]?.[2]||`${g.name} and Anastasia have a great time!`;if(action==='punch'&&g.name==='Nico')message='A playful cartoon bonk! Nico sees stars, then asks if this means he is late again.';if(action==='custom')message=`${g.name} and Anastasia: ${g.custom}!`;if(action==='promise')message=marriedInMoscow?'Aleksey smiles. Anastasia kisses her husband and prince. ♥':'Aleksey smiles. Anastasia kisses her prince. ♥';if(action==='bar')message='Puta Madre and Anastasia dance under the neon lights!';const token=++sequenceToken;showActionScene(action,g,message);playActionMusic(action);if(action==='bar'){
     const lines=['Shot one! The night is young.','Shot two! Dance floor takeover!','Shot three! More dancing!','Shot four! The room starts spinning...','Shot five! Puta Madre cheers her on!','Shot six! Anastasia is completely drunk!'];
     lines.forEach((line,i)=>setTimeout(()=>{if(token!==sequenceToken)return;$('#shotCount').textContent=`${i+1} / 6`;$('#shotIcons').textContent=Array.from({length:6},(_,n)=>n<=i?'🥃':'▢').join(' ');$('#actionSceneMessage').textContent=line;playTone(780+i*90,.15,'square',.07);if(i===5){drunk=true;el.actionStage.classList.add('very-tipsy');updateHUD()}},950+i*1100));
     setTimeout(()=>finishAction(action,token),7900);
