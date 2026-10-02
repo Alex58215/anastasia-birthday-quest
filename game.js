@@ -55,10 +55,11 @@ const actionInfo = {
  bardance:['💃','Dance on the bar','Kelly and Anastasia turn the bar into a stage. Even the bartender gives them a standing ovation.'],
  gossip:['🤫','Gossip','One whispered story becomes a six-season series before dessert arrives.'],
  fuckdogs:['🐕','Fuck dogs','Vanessa and Anastasia bring the dogs to the party. The dogs promptly steal the whole show!'],
- partyhard:['🍻','Party hard, get drunk & miss the ski bus','One drink becomes a legendary night. By morning, the ski bus is gone—so Eva and Anastasia declare après-ski open before skiing even starts!']
+ partyhard:['🍻','Party hard, get drunk & miss the ski bus','One drink becomes a legendary night. By morning, the ski bus is gone—so Eva and Anastasia declare après-ski open before skiing even starts!'],
+ massageeveryone:['🍻','Get drunk and give massage to everyone','Cheng has one drink, then opens the most unexpected massage service in Grenoble. The queue is longer than the bar!']
 };
 const starterGuests = photos.map((p,i) => ({id:'guest-'+i,name:p[1]==='pet'?'The Birthday Pup':`Mystery Guest ${String(i+1).padStart(2,'0')}`,role:p[2],kind:p[1],photo:PHOTO+p[0],enabled:true,actions:p[1]==='pet'?['pet','treat','boop','selfie']:p[1]==='woman'?['hug','dance','toast','scissors','selfie','sing']:['hug','dance','toast','highfive','joke','punch'],custom:''}));
-const featuredActions={Eva:['partyhard'],Rafa:['scissors','threewine','workevent'],Toni:['punch','ontime','venice'],Nick:['sevenwine'],Ganzu:['responsibilities'],Kelly:['snowboard','bardance','gossip'],Vanessa:['fuckdogs']};
+const featuredActions={Eva:['partyhard'],Rafa:['scissors','threewine','workevent'],Toni:['punch','ontime','venice'],Nick:['sevenwine'],Ganzu:['responsibilities'],Kelly:['snowboard','bardance','gossip'],Cheng:['massageeveryone'],Vanessa:['fuckdogs']};
 const featuredSeed=[
   {id:'eva',name:'Eva',kind:'woman',photo:PHOTO+'eva.jpg'},
   {id:'guest-19',name:'Rafa',kind:'woman',photo:PHOTO+'b1599d11-6783-41d0-83a6-b703fbbef33a.jpg'},
@@ -66,6 +67,7 @@ const featuredSeed=[
   {id:'guest-21',name:'Nick',kind:'man',photo:PHOTO+'c0d752e1-4117-435a-a875-8e2c36eb0dce.jpg'},
   {id:'guest-20',name:'Ganzu',kind:'man',photo:PHOTO+'bd5cb0e6-293d-4504-8135-f5ccc0add804.jpg'},
   {id:'kelly',name:'Kelly',kind:'woman',photo:PHOTO+'kelly.jpeg'},
+  {id:'cheng',name:'Cheng',kind:'man',photo:PHOTO+'cheng.jpg'},
   {id:'vanessa',name:'Vanessa',kind:'woman',photo:PHOTO+'vanessa.jpg'}
 ];
 const otherSeeds=[
@@ -98,13 +100,19 @@ let audioCtx;
 function loadRoster(){try{const saved=JSON.parse(localStorage.getItem('anastasiaQuestRoster'));if(Array.isArray(saved)){
   const guests=saved.map(sanitizeGuest).filter(g=>g&&!g.photo.endsWith('b74f4e09-a2a6-4487-9aad-9d2b959e98f3.jpg'));
   const version=localStorage.getItem('anastasiaQuestRosterVersion');
-  if(version==='6')return guests;
+  if(version==='7')return guests;
+  if(version==='6'){
+    const cheng=guests.find(g=>g.id==='cheng'||g.name.trim().toLowerCase()==='cheng');
+    if(!cheng){const vanessaIndex=guests.findIndex(g=>g.id==='vanessa'||g.name.trim().toLowerCase()==='vanessa');guests.splice(vanessaIndex<0?guests.length:vanessaIndex,0,structuredClone(defaults.find(g=>g.id==='cheng')))}
+    else{cheng.id='cheng';cheng.name='Cheng';cheng.kind='man';cheng.photo=PHOTO+'cheng.jpg';cheng.actions=['massageeveryone']}
+    localStorage.setItem('anastasiaQuestRoster',JSON.stringify(guests));localStorage.setItem('anastasiaQuestRosterVersion','7');
+    return guests;
+  }
   if(version==='5'){
     const eva=guests.find(g=>g.id==='eva'||g.name.trim().toLowerCase()==='eva');
     if(!eva)guests.unshift(structuredClone(defaults.find(g=>g.id==='eva')));
     else{eva.id='eva';eva.name='Eva';eva.kind='woman';eva.photo=PHOTO+'eva.jpg';eva.actions=['partyhard']}
-    localStorage.setItem('anastasiaQuestRoster',JSON.stringify(guests));localStorage.setItem('anastasiaQuestRosterVersion','6');
-    return guests;
+    localStorage.setItem('anastasiaQuestRoster',JSON.stringify(guests));localStorage.setItem('anastasiaQuestRosterVersion','6');return loadRoster();
   }
   if(version==='4'){
     const vanessa=guests.find(g=>g.id==='vanessa'||g.name.trim().toLowerCase()==='vanessa');
@@ -126,7 +134,7 @@ function loadRoster(){try{const saved=JSON.parse(localStorage.getItem('anastasia
 function loadEndingPhoto(){try{return localStorage.getItem('anastasiaQuestEndingPhoto')||PHOTO+'all.jpeg'}catch(e){return PHOTO+'all.jpeg'}}
 function saveEndingPhoto(){try{localStorage.setItem('anastasiaQuestEndingPhoto',endingPhoto)}catch(e){alert('This browser could not save the ending photo. Try a smaller image.')}}
 function sanitizeGuest(g){if(!g||typeof g!=='object')return null;return {id:String(g.id||crypto.randomUUID()),name:String(g.name||'Mystery Guest').slice(0,80),role:String(g.role||'Friend').slice(0,80),kind:['woman','man','pet','group'].includes(g.kind)?g.kind:'group',photo:typeof g.photo==='string'?g.photo:'',enabled:g.enabled!==false,actions:Array.isArray(g.actions)?g.actions.filter(a=>actionInfo[a]):['hug','dance','toast'],custom:String(g.custom||'').slice(0,80)}}
-function saveRoster(){try{localStorage.setItem('anastasiaQuestRoster',JSON.stringify(roster));localStorage.setItem('anastasiaQuestRosterVersion','6')}catch(e){alert('This browser could not save all photos. Try a smaller image or export your list.')}}
+function saveRoster(){try{localStorage.setItem('anastasiaQuestRoster',JSON.stringify(roster));localStorage.setItem('anastasiaQuestRosterVersion','7')}catch(e){alert('This browser could not save all photos. Try a smaller image or export your list.')}}
 function makeRoute(){route=[university,schneider,toliki,kaiko,...roster.filter(g=>g.enabled).map(g=>({...g}))];route.splice(Math.min(9,route.length),0,barrio,hristo);progress=0;encounterIndex=0;ended=false;inEncounter=false;updateHUD();updateSprite()}
 function locationAt(i){return freeRoam?freeRoamLocation:corridorWalk?'SCHNEIDER · CORRIDORS':route[i]?.id==='university'?'MOSCOW · PLESHKA':route[i]?.id==='schneider'?'MOSCOW · DVINTSEV':route[i]?.id==='barrio'?'BARRIO LATINO':route[i]?.id==='toliki'?'GRENOBLE · NEW FRIENDS':route[i]?.id==='kaiko'?'GRENOBLE · KAIKO':locations[Math.floor(Math.max(0,i-2)/2)%locations.length]}
 function updateHUD(){const friends=Math.max(0,route.length-2),met=Math.min(Math.max(0,encounterIndex-2),friends),inMoscow=corridorWalk||['university','schneider'].includes(route[encounterIndex]?.id);el.location.textContent=locationAt(encounterIndex);el.progress.style.width=freeRoam?'100%':`${friends?met/friends*100:100}%`;el.progressLabel.textContent=freeRoam?'∞ FRIENDS':`${met} / ${friends} FRIENDS`;$('#statusLabel').textContent=inMoscow?'CHAPTER':'WINE LEVEL';$('#wineLevel').textContent=inMoscow?'MOSCOW':drunk?'TEQUILA x6 ★':'♥ ♥ ♥';el.levelBadge.textContent=`ANASTASIA · LVL ${String(level).padStart(2,'0')}`;el.levelBadge.setAttribute('aria-label',`Anastasia's current level: ${level}`);el.scene.classList.toggle('tipsy',drunk);el.scene.classList.toggle('moscow',inMoscow)}
@@ -144,7 +152,7 @@ function playActionMusic(action){
     joke:[392,523,392,659,523,784],selfie:[784,988,1175,1568],confetti:[523,659,784,988,1175,1319],spin:[392,494,587,698,784,988],compliment:[523,659,784,1047],highfive:[392,784,1175],
     threewine:[523,659,784,659,523,784,988],workevent:[330,392,494,587,784,988,784,1047],
     ontime:[784,392,784,392,988,523],venice:[349,440,523,659,587,523,440],sevenwine:[523,659,784,988,784,659,523],
-    responsibilities:[262,330,392,523,659,784],snowboard:[392,494,587,784,988,1175],bardance:[330,494,659,494,392,587,784,587],gossip:[523,587,659,587,784,659],fuckdogs:[392,523,659,784,659,523,988],partyhard:[330,392,494,659,784,659,988,784,659]
+    responsibilities:[262,330,392,523,659,784],snowboard:[392,494,587,784,988,1175],bardance:[330,494,659,494,392,587,784,587],gossip:[523,587,659,587,784,659],fuckdogs:[392,523,659,784,659,523,988],partyhard:[330,392,494,659,784,659,988,784,659],massageeveryone:[392,523,659,784,659,523,392,784]
   };
   const notes=tunes[action]||[523,659,784,1047];
   const repetitions=action==='bar'?2:1,beat=action==='bar'?.21:.22;
@@ -216,6 +224,13 @@ function showHristoVideo(token){showVideoScene({chapter:'★ GRENOBLE · HRISTO 
 function showEvaPhoto(token){if(token!==sequenceToken)return;el.actionScene.classList.add('hidden');showStoryCard({photo:'eva1.jpeg',alt:'Eva and Anastasia ready for a big night out',eyebrow:'✦ GRENOBLE · EVA ✦',title:'THE NIGHT STARTS HERE',text:'The ski bus is booked for tomorrow. Eva and Anastasia agree to have just one drink tonight. The photo suggests the plan is already in trouble.',button:'',stamp:'EVA · PARTY NIGHT',autoAdvanceMs:3000},token,showEvaVideo2)}
 function showEvaVideo2(token){showVideoScene({chapter:'★ GRENOBLE · EVA ★',byline:'THE PARTY CONTINUES · 1 / 2',title:'ONE DRINK LATER...',source:'eva2.mp4',poster:'eva1.jpeg',playLabel:'▶ PLAY EVA’S VIDEO',withCaptions:false,continueLabel:'▶ NEXT EVA MEMORY'},token,showEvaVideo3)}
 function showEvaVideo3(token){showVideoScene({chapter:'★ GRENOBLE · EVA ★',byline:'THE PARTY CONTINUES · 2 / 2',title:'THE SKI BUS LEFT WITHOUT THEM!',source:'eva3.mp4',poster:'eva1.jpeg',playLabel:'▶ PLAY EVA’S VIDEO',withCaptions:false,continueLabel:'▶ KEEP EXPLORING'},token,t=>finishAction('partyhard',t))}
+function showChengMedia(token,index=0){if(token!==sequenceToken)return;el.actionScene.classList.add('hidden');const memories=[
+  {photo:'cheng1.jpeg',title:'A TOAST TO CHENG',text:'The evening starts with a toast. Cheng promises he is taking it easy tonight.'},
+  {photo:'cheng2.jpeg',title:'ONE MORE ROUND',text:'The bar disagrees with that plan. The whole group joins in.'},
+  {photo:'cheng3.jpeg',title:'MASSAGE SERVICE: OPEN!',text:'Cheng finds his true calling: making everyone at the party feel five stars better.'},
+  {video:'cheng4.mp4',title:'THE PARTY CONTINUES'},
+  {video:'cheng5.mp4',title:'EVERYONE GETS A MASSAGE'}
+];if(index>=memories.length){finishAction('massageeveryone',token);return}const memory=memories[index];if(memory.photo){showStoryCard({photo:memory.photo,alt:`Cheng party memory ${index+1}`,eyebrow:`✦ CHENG · MEMORY ${index+1} / 5 ✦`,title:memory.title,text:memory.text,button:'',stamp:'GRENOBLE · CHENG',autoAdvanceMs:2000},token,t=>showChengMedia(t,index+1));return}showVideoScene({chapter:'★ GRENOBLE · CHENG ★',byline:`MEMORY ${index+1} / 5`,title:memory.title,source:memory.video,poster:'cheng3.jpeg',playLabel:'▶ PLAY CHENG’S VIDEO',withCaptions:false,continueLabel:index===memories.length-1?'▶ KEEP EXPLORING':'▶ NEXT CHENG MEMORY'},token,t=>showChengMedia(t,index+1))}
 function showRafaVideo(action,token){if(token!==sequenceToken)return;el.actionScene.classList.add('hidden');showVideoScene({chapter:'★ GRENOBLE · RAFA ★',byline:'ANASTASIA & RAFA',title:'ONE MORE RAFA MEMORY!',source:'rafa-video_story.m4v',poster:'rafa1_story.jpg',playLabel:'▶ PLAY RAFA’S VIDEO',withCaptions:false,continueLabel:'▶ KEEP EXPLORING'},token,t=>finishAction(action,t))}
 function showKellyVideo(action,token){if(token!==sequenceToken)return;el.actionScene.classList.add('hidden');showVideoScene({chapter:'★ GRENOBLE · KELLY ★',byline:'ANASTASIA & KELLY',title:'ONE MORE DRINK WITH KELLY!',source:'drink with kelly.mp4',poster:'kelly.jpeg',playLabel:'▶ PLAY KELLY’S VIDEO',withCaptions:false,continueLabel:'▶ KEEP EXPLORING'},token,t=>finishAction(action,t))}
 function startTolikiStory(token){showStoryCard({photo:'toliki.jpg',alt:'Anastasia with Toliki and friends in the snow',eyebrow:'✦ NEW FRIENDS IN GRENOBLE ✦',title:'MEET TOLIKI!',text:'A new city brings wonderful new people. Anastasia and Aleksey meet Toliki, and an unforgettable friendship begins.',button:'♥ BECOME FRIENDS',stamp:'GRENOBLE · TOLIKI'},token,showTolikiFriendship)}
@@ -245,22 +260,22 @@ function showActionScene(action,g,message){
     pet:['✋','🐾','♥ ♥ ♥'],treat:['🦴','🐾','YUM!'],boop:['👆','🐾','BOOP!'],custom:['✨','✨','✦ ✦ ✦'],
     threewine:['🍷','🍷','🍷 🍷 🍷'],workevent:['🎪','📋','BEST. EVENT. EVER!'],
     ontime:['⏰','🏃','9:01!'],venice:['🛶','🇮🇹','CIAO, VENEZIA!'],sevenwine:['🧀','🍷','🍷 🧀 🍷'],
-    responsibilities:['📋','💨','YES, BOSS!'],snowboard:['🏂','🏂','❄ ❄ ❄'],bardance:['💃','🪩','♪ ♫ ♪'],gossip:['🤫','👂','SHHH...'],fuckdogs:['🐕','🐕','🐾 🐾 🐾'],partyhard:['🍻','🍻','BUS? GONE!']
+    responsibilities:['📋','💨','YES, BOSS!'],snowboard:['🏂','🏂','❄ ❄ ❄'],bardance:['💃','🪩','♪ ♫ ♪'],gossip:['🤫','👂','SHHH...'],fuckdogs:['🐕','🐕','🐾 🐾 🐾'],partyhard:['🍻','🍻','BUS? GONE!'],massageeveryone:['🍹','💆','NEXT, PLEASE!']
   }[action]||['✨','✨','✦ ✦ ✦'];
   rotateAnastasiaAvatar($('#actionAvatar'));
   el.actionStage.className=`action-stage pixel-panel mode-${action}${g.kind==='pet'?' pet-stage':''}`;
   el.stageGuestPhoto.src=action==='snowboard'?PHOTO+'kelly-snowboard.JPG':g.photo||'';el.stageGuestPhoto.alt=action==='snowboard'?'Kelly on the snowboard':g.name;el.stageGuestName.textContent=g.name.toUpperCase();
   el.actionStage.querySelector('.stage-actor.ana .actor-prop').textContent=visual[0];
   el.actionStage.querySelector('.stage-actor.guest .actor-prop').textContent=visual[1];
-  el.stageEffects.textContent=visual[2];$('#actionSceneTitle').textContent=action==='bar'?'BARRIO LATINO!':action==='partyhard'?'PARTY HARD WITH EVA!':(actionInfo[action]?.[1]||'BIRTHDAY MOMENT').toUpperCase()+'!';
-  $('#actionSceneMessage').textContent=message;$('#stageNeon').textContent=action==='bar'?'★ BARRIO LATINO ★':action==='partyhard'?'★ ONE DRINK BEFORE SKIING ★':action==='snowboard'?'★ THE SNOWY ALPS ★':action==='venice'?'★ VENICE ★':'✦ GRENOBLE ✦';
+  el.stageEffects.textContent=visual[2];$('#actionSceneTitle').textContent=action==='bar'?'BARRIO LATINO!':action==='partyhard'?'PARTY HARD WITH EVA!':action==='massageeveryone'?'CHENG’S MASSAGE BAR!':(actionInfo[action]?.[1]||'BIRTHDAY MOMENT').toUpperCase()+'!';
+  $('#actionSceneMessage').textContent=message;$('#stageNeon').textContent=action==='bar'?'★ BARRIO LATINO ★':action==='partyhard'?'★ ONE DRINK BEFORE SKIING ★':action==='massageeveryone'?'★ FREE MASSAGES ★':action==='snowboard'?'★ THE SNOWY ALPS ★':action==='venice'?'★ VENICE ★':'✦ GRENOBLE ✦';
   el.stageShots.classList.toggle('hidden',action!=='bar');$('#shotCount').textContent='0 / 6';$('#shotIcons').textContent='▢ ▢ ▢ ▢ ▢ ▢';
   el.encounter.classList.add('hidden');el.actionScene.classList.remove('hidden');
 }
 function finishAction(action,token){if(token!==sequenceToken)return;el.barioVideo.pause();el.actionScene.classList.add('hidden');inEncounter=false;if(freeRoam){pickFreeRoamGuest();showToast('ANOTHER STORY AWAITS',2200);return}encounterIndex++;progress=encounterIndex*100-10;updateHUD();if(encounterIndex>=route.length){endGame();return}showToast(drunk&&action==='bar'?'SO MANY TEQUILA SHOTS...':`ONWARD TO ${locationAt(encounterIndex)}!`,2000)}
 function playBarioClip(source,trimEndSeconds=0){return new Promise(resolve=>{const video=el.barioVideo;let finished=false,clipEnd=Infinity;const done=()=>{if(finished)return;finished=true;clearTimeout(watchdog);video.pause();video.onloadedmetadata=null;video.ontimeupdate=null;video.onended=null;video.onerror=null;resolve()};video.onloadedmetadata=()=>{if(Number.isFinite(video.duration))clipEnd=Math.max(0,video.duration-trimEndSeconds)};video.ontimeupdate=()=>{if(video.currentTime>=clipEnd)done()};video.onended=done;video.onerror=done;video.src=PHOTO+source;video.load();video.muted=!soundOn;const watchdog=setTimeout(done,120000);video.play().catch(async()=>{video.muted=true;try{await video.play()}catch(e){setTimeout(done,3200)}})})}
 async function playBarioShots(token){const media=['bario0.jpeg','bario1.MP4','bario2.mp4','bario3.mp4','bario4.jpeg','bario5-1.mp4'];const lines=['The night is young!','The dance floor is warming up!','Now everyone knows the chorus!','The room begins to spin...','One more photo for the album!','Anastasia is completely drunk!'];for(let i=0;i<media.length;i++){if(token!==sequenceToken)return;$('#shotCount').textContent=`${i+1} / 6`;$('#shotIcons').textContent=Array.from({length:6},(_,n)=>n<=i?'🥃':'▢').join(' ');$('#actionSceneMessage').textContent=`Shot ${i+1}! ${lines[i]}`;playTone(780+i*90,.15,'square',.07);const source=media[i];if(/\.jpe?g$/i.test(source)){el.barioVideo.pause();el.barioVideo.classList.add('hidden');el.barioPhoto.src=PHOTO+source;el.barioPhoto.classList.remove('hidden');await new Promise(resolve=>setTimeout(resolve,3000))}else{el.barioPhoto.classList.add('hidden');el.barioVideo.classList.remove('hidden');await playBarioClip(source,i===2||i===3?5:0)}if(i===5){drunk=true;el.actionStage.classList.add('very-tipsy');updateHUD()}}if(token===sequenceToken)setTimeout(()=>finishAction('bar',token),1100)}
-function doAction(action){const g=route[encounterIndex];if(!g)return;[...el.actionGrid.children].forEach(b=>b.disabled=true);let message=actionInfo[action]?.[2]||`${g.name} and Anastasia have a great time!`;if(action==='punch'&&g.name==='Toni')message='A playful cartoon bonk! Toni sees stars, then asks if this means he is late again.';if(action==='custom')message=`${g.name} and Anastasia: ${g.custom}!`;if(action==='bar')message='Puta Madre and Anastasia dance under the neon lights!';const token=++sequenceToken;showActionScene(action,g,message);playActionMusic(action);if(action==='bar')playBarioShots(token);else setTimeout(()=>{if(g.id==='eva'||g.name.trim().toLowerCase()==='eva')showEvaPhoto(token);else if(g.id==='guest-19'||g.name.trim().toLowerCase()==='rafa')showRafaVideo(action,token);else if(g.id==='kelly'||g.name.trim().toLowerCase()==='kelly')showKellyVideo(action,token);else finishAction(action,token)},3300)}
+function doAction(action){const g=route[encounterIndex];if(!g)return;[...el.actionGrid.children].forEach(b=>b.disabled=true);let message=actionInfo[action]?.[2]||`${g.name} and Anastasia have a great time!`;if(action==='punch'&&g.name==='Toni')message='A playful cartoon bonk! Toni sees stars, then asks if this means he is late again.';if(action==='custom')message=`${g.name} and Anastasia: ${g.custom}!`;if(action==='bar')message='Puta Madre and Anastasia dance under the neon lights!';const token=++sequenceToken;showActionScene(action,g,message);playActionMusic(action);if(action==='bar')playBarioShots(token);else setTimeout(()=>{if(g.id==='eva'||g.name.trim().toLowerCase()==='eva')showEvaPhoto(token);else if(g.id==='cheng'||g.name.trim().toLowerCase()==='cheng')showChengMedia(token);else if(g.id==='guest-19'||g.name.trim().toLowerCase()==='rafa')showRafaVideo(action,token);else if(g.id==='kelly'||g.name.trim().toLowerCase()==='kelly')showKellyVideo(action,token);else finishAction(action,token)},3300)}
 function playBirthdayMusic(){const notes=[392,392,440,392,523,494,392,392,440,392,587,523,392,392,784,659,523,494,440,698,698,659,523,587,523];const beats=[.55,.25,.8,.8,.8,1.55,.55,.25,.8,.8,.8,1.55,.55,.25,.8,.8,.8,.8,1.4,.55,.25,.8,.8,.8,1.6];let at=0;birthdayTones=[];notes.forEach((note,i)=>{birthdayTones.push(playTone(note,beats[i]*.8,'triangle',.065,at),playTone(note/2,beats[i]*.65,'sine',.025,at));at+=beats[i]*.44})}
 function showBirthdayFinale(){const id=++birthdayShowId;el.birthdayShowTitle.textContent='A SPECIAL DAY AWAITS';el.birthdayShowText.textContent='Turn up the music. This one is for Anastasia!';el.birthdayShow.classList.remove('hidden');playBirthdayMusic();const phrases=[['HAPPY BIRTHDAY','THE WHOLE WORLD IS CELEBRATING!'],['ANASTASIA!','All the friends. All the adventures. All the joy.'],['MAKE A WISH ✦','Your next chapter is yours to create.']];phrases.forEach(([title,body],i)=>setTimeout(()=>{if(id!==birthdayShowId)return;el.birthdayShowTitle.textContent=title;el.birthdayShowText.textContent=body;el.birthdayShow.classList.remove('birthday-beat');void el.birthdayShow.offsetWidth;el.birthdayShow.classList.add('birthday-beat')},(i+1)*3600));setTimeout(()=>finishBirthdayFinale(id),14500)}
 function finishBirthdayFinale(id=birthdayShowId){if(id!==birthdayShowId)return;birthdayShowId++;birthdayTones.forEach(tone=>{try{tone?.stop()}catch(e){}});birthdayTones=[];el.birthdayShow.classList.add('hidden');showBirthdayVideo()}
